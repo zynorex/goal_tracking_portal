@@ -6,8 +6,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { updateSystemWindows } from "./actions";
+import { useRouter } from "next/navigation";
 
-export function AdminSettingsClient({ initialWindows }: { initialWindows: any }) {
+export function AdminSettingsClient({ initialWindows }: { initialWindows: Record<string, { active: boolean }> }) {
+  const router = useRouter();
   const [windows, setWindows] = useState(initialWindows || {});
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -19,12 +21,13 @@ export function AdminSettingsClient({ initialWindows }: { initialWindows: any })
     try {
       await updateSystemWindows(newWindows);
       toast.success(`${key} window ${checked ? 'opened' : 'closed'} successfully.`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update configuration");
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to update configuration");
       // Revert on failure
       setWindows(windows);
     } finally {
       setIsUpdating(false);
+      router.refresh();
     }
   };
 

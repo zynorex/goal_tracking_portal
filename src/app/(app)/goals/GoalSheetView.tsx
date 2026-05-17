@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Lock, Plus, Upload, Loader2 } from "lucide-react";
+import { Lock, Plus, Upload, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addGoal, submitGoalSheet } from "./actions";
+import { addGoal, submitGoalSheet, reviewGoalSheet } from "./actions";
+import { useRouter } from "next/navigation";
 
 type Goal = {
   id: string;
@@ -28,7 +29,8 @@ type GoalSheet = {
   goals: Goal[];
 };
 
-export function GoalSheetView({ initialSheet }: { initialSheet: GoalSheet }) {
+export function GoalSheetView({ initialSheet, isManagerView = false }: { initialSheet: GoalSheet, isManagerView?: boolean }) {
+  const router = useRouter();
   const [sheet, setSheet] = useState(initialSheet);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +43,10 @@ export function GoalSheetView({ initialSheet }: { initialSheet: GoalSheet }) {
   const [weightage, setWeightage] = useState("");
 
   const totalWeightage = sheet.goals.reduce((acc: number, g: Goal) => acc + g.weightage, 0);
-  const isLocked = sheet.status === "APPROVED" || sheet.status === "SUBMITTED";
+  
+  // For an employee, it's locked if Approved or Submitted.
+  // For a manager, they shouldn't edit the goals directly anyway.
+  const isLocked = isManagerView || sheet.status === "APPROVED" || sheet.status === "SUBMITTED";
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -93,6 +98,7 @@ export function GoalSheetView({ initialSheet }: { initialSheet: GoalSheet }) {
       toast.error((error as Error).message || "Failed to add goal");
     } finally {
       setIsSubmitting(false);
+      router.refresh();
     }
   };
 
@@ -111,6 +117,21 @@ export function GoalSheetView({ initialSheet }: { initialSheet: GoalSheet }) {
       toast.error((error as Error).message || "Failed to submit goal sheet");
     } finally {
       setIsSubmitting(false);
+      router.refresh();
+    }
+  };
+
+  const handleReview = async (action: "APPROVE" | "RETURN") => {
+    setIsSubmitting(true);
+    try {
+      await reviewGoalSheet(sheet.id, action);
+      toast.success(`Goal sheet ${action === "APPROVE" ? "approved" : "returned"} successfully`);
+      setSheet({ ...sheet, status: action === "APPROVE" ? "APPROVED" : "RETURNED" });
+    } catch (error) {
+      toast.error((error as Error).message || `Failed to ${action.toLowerCase()} goal sheet`);
+    } finally {
+      setIsSubmitting(false);
+      router.refresh();
     }
   };
 
@@ -132,11 +153,34 @@ export function GoalSheetView({ initialSheet }: { initialSheet: GoalSheet }) {
                 {totalWeightage}%
               </div>
             </div>
-            {!isLocked && (
+            
+            {/* Employee Submit Button */}
+            {!isManagerView && !isLocked && (
               <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-[#2E86AB] hover:bg-[#1E3A5F]">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                 Submit
               </Button>
+            )}
+
+            {/* Manager Review Buttons */}
+            {isManagerView && sheet.status === "SUBMITTED" && (
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={() => handleReview("RETURN")} 
+                  disabled={isSubmitting} 
+                  variant="outline"
+                  className="text-[#E74C3C] border-[#E74C3C] hover:bg-red-50"
+                >
+                  <XCircle className="mr-2 h-4 w-4" /> Return
+                </Button>
+                <Button 
+                  onClick={() => handleReview("APPROVE")} 
+                  disabled={isSubmitting} 
+                  className="bg-[#2ECC71] hover:bg-green-600"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -157,7 +201,7 @@ export function GoalSheetView({ initialSheet }: { initialSheet: GoalSheet }) {
                 {sheet.goals.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No goals added yet. Add a goal to get started.
+                      No goals added yet. {isManagerView ? "" : "Add a goal to get started."}
                     </TableCell>
                   </TableRow>
                 ) : (

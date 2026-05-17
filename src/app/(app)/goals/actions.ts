@@ -3,6 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,10 @@ export async function addGoal(data: {
     }
   });
 
+  revalidatePath("/goals");
+  revalidatePath("/team");
+  revalidatePath("/dashboard");
+
   return newGoal;
 }
 
@@ -74,6 +79,10 @@ export async function submitGoalSheet(sheetId: string) {
     where: { id: sheetId },
     data: { status: "SUBMITTED" }
   });
+
+  revalidatePath("/goals");
+  revalidatePath("/team");
+  revalidatePath("/dashboard");
 
   return updated;
 }
@@ -100,6 +109,11 @@ export async function reviewGoalSheet(sheetId: string, action: "APPROVE" | "RETU
     where: { id: sheetId },
     data: { status: newStatus }
   });
+
+  revalidatePath("/goals");
+  revalidatePath("/team");
+  revalidatePath("/dashboard");
+  revalidatePath(`/goals/${sheetId}`);
 
   return updated;
 }

@@ -5,6 +5,8 @@ import { GoalSheetView } from "./GoalSheetView";
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+
 export default async function GoalsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;

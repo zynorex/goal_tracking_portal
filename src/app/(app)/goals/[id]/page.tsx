@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+
 export default async function GoalSheetReviewPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;

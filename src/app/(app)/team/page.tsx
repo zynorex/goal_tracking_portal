@@ -5,8 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const prisma = new PrismaClient();
+
+export const dynamic = 'force-dynamic';
 
 export default async function TeamPage() {
   const session = await getServerSession(authOptions);
@@ -81,14 +84,19 @@ export default async function TeamPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant={status === "SUBMITTED" ? "default" : "outline"} 
-                            size="sm"
-                            className={status === "SUBMITTED" ? "bg-[#2E86AB] hover:bg-[#1E3A5F]" : ""}
-                            disabled={status === "NOT_STARTED"}
-                          >
-                            {status === "SUBMITTED" ? "Review" : "View"}
-                          </Button>
+                          {status === "NOT_STARTED" || !sheet?.id ? (
+                            <Button variant="outline" size="sm" disabled>View</Button>
+                          ) : (
+                            <Link href={`/goals/${sheet.id}`}>
+                              <Button 
+                                variant={status === "SUBMITTED" ? "default" : "outline"} 
+                                size="sm"
+                                className={status === "SUBMITTED" ? "bg-[#2E86AB] hover:bg-[#1E3A5F]" : ""}
+                              >
+                                {status === "SUBMITTED" ? "Review" : "View"}
+                              </Button>
+                            </Link>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
