@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          String    @default("EMPLOYEE") // ADMIN, MANAGER, EMPLOYEE
+  department    String?
+  managerId     String?
+  manager       User?     @relation("ManagerToEmployee", fields: [managerId], references: [id], onDelete: SetNull)
+  directReports User[]    @relation("ManagerToEmployee")
+  goalSheets    GoalSheet[]
+}
+
+model GoalSheet {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String   @default("DRAFT") // DRAFT, SUBMITTED, RETURNED, APPROVED
+  year        Int      @default(2024)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  goals       Goal[]
+  comments    Comment[]
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  goalSheetId String
+  goalSheet   GoalSheet @relation(fields: [goalSheetId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  thrustArea  String
+  uomType     String   // Numeric, Percentage, Timeline, Zero-based
+  target      String   
+  weightage   Float
+  
+  q1Actual    String?
+  q1Status    String?  // Not Started, On Track, Completed
+  q2Actual    String?
+  q2Status    String?
+  q3Actual    String?
+  q3Status    String?
+  q4Actual    String?
+  q4Status    String?
+
+  isShared    Boolean  @default(false)
+  sharedId    String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  goalSheetId String
+  goalSheet   GoalSheet @relation(fields: [goalSheetId], references: [id], onDelete: Cascade)
+  authorId    String
+  quarter     String   // Q1, Q2, Q3, Q4
+  text        String
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  userName    String
+  userRole    String
+  action      String   
+  details     String
+  createdAt   DateTime @default(now())
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   
+  updatedAt   DateTime @updatedAt
+}
