@@ -24,3 +24,22 @@ export async function updateSystemWindows(windowsData: Record<string, { active: 
 
   return updatedConfig;
 }
+
+export async function getExportData() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  const users = await prisma.user.findMany({
+    include: {
+      goalSheets: {
+        include: {
+          goals: true
+        }
+      }
+    }
+  });
+
+  return users;
+}
