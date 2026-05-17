@@ -1,11 +1,9 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GoalDistributionChart, PerformanceTrendsChart } from "./DashboardCharts";
 import { Activity, Target, CheckCircle2, Clock } from "lucide-react";
-
-const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 

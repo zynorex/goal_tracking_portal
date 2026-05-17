@@ -1,10 +1,8 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { GoalSheetView } from "../GoalSheetView";
 import { redirect } from "next/navigation";
-
-const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 
